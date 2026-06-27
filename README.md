@@ -1,7 +1,20 @@
-# Tauri + React + Typescript
+# Systemd Unit Manager
 
-This template should help get you started developing with Tauri, React and Typescript in Vite.
+A desktop application to view and manage systemd units with a clean, modern interface made with antDesign.
 
-## Recommended IDE Setup
 
-- [VS Code](https://code.visualstudio.com/) + [Tauri](https://marketplace.visualstudio.com/items?itemName=tauri-apps.tauri-vscode) + [rust-analyzer](https://marketplace.visualstudio.com/items?itemName=rust-lang.rust-analyzer)
+# Build
+
+```bash
+# Clone the repository
+git clone https://github.com/MatinKha/sysd-manager.git
+
+# Install dependencies
+cd sysd-manager
+npm i
+
+# Dev
+npm run tauri dev
+
+# Production
+npm run tauri build
