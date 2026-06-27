@@ -39,7 +39,6 @@ export default function UnitList({ }: UnitListProps) {
       <Table.Column key="unit" title="Unit Name" dataIndex="unit" />
       <Table.Column key="load" title="Loaded" dataIndex="load" />
       <Table.Column key="active" title="Active" dataIndex="active" />
-      <Table.Column key="Sub" title="Sub" dataIndex="Sub" />
       <Table.Column key="description" title="Description" dataIndex="description" />
     </Table>
   </div>;
