@@ -238,6 +238,61 @@ fn parse_systemd_unit(props: &HashMap<String, String>, unit_name: &str) -> Syste
     }
 }
 
+#[tauri::command]
+pub fn list_units() -> Result<Vec<SystemdUnit>, String> {
+    let output = Command::new("systemctl")
+        .args([
+            "list-units",
+            "--all",
+            "--type=service",
+            "--no-legend",
+            "--no-pager",
+            "--output=json",
+        ])
+        .output()
+        .map_err(|e| format!("Failed to execute systemctl: {}", e))?;
+
+    if !output.status.success() {
+        return list_units_text_fallback();
+    }
+
+    let units: Vec<SystemdUnit> = serde_json::from_slice(&output.stdout)
+        .map_err(|e| format!("Failed to parse JSON: {}", e))?;
+
+    Ok(units)
+}
+
+fn list_units_text_fallback() -> Result<Vec<SystemdUnit>, String> {
+    let output = Command::new("systemctl")
+        .args([
+            "list-units",
+            "--all",
+            "--type=service",
+            "--no-legend",
+            "--no-pager",
+        ])
+        .output()
+        .map_err(|e| format!("Failed to execute systemctl: {}", e))?;
+
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    let mut units = Vec::new();
+
+    for line in stdout.lines() {
+        let parts: Vec<&str> = line.split_whitespace().collect();
+        if parts.len() >= 5 {
+            units.push(SystemdUnit {
+                unit: parts[0].to_string(),
+                load: parts[1].to_string(),
+                active: parts[2].to_string(),
+                sub: parts[3].to_string(),
+                description: parts[4..].join(" "),
+            });
+        }
+    }
+
+    Ok(units)
+}
+
 fn parse_list_prop(props: &HashMap<String, String>, key: &str) -> Vec<String> {
     props
         .get(key)
@@ -310,59 +365,4 @@ fn parse_exec_command_optional(props: &HashMap<String, String>, key: &str) -> Op
     } else {
         Some(result)
     }
-}
-
-#[tauri::command]
-pub fn list_units() -> Result<Vec<SystemdUnit>, String> {
-    let output = Command::new("systemctl")
-        .args([
-            "list-units",
-            "--all",
-            "--type=service",
-            "--no-legend",
-            "--no-pager",
-            "--output=json",
-        ])
-        .output()
-        .map_err(|e| format!("Failed to execute systemctl: {}", e))?;
-
-    if !output.status.success() {
-        return list_units_text_fallback();
-    }
-
-    let units: Vec<SystemdUnit> = serde_json::from_slice(&output.stdout)
-        .map_err(|e| format!("Failed to parse JSON: {}", e))?;
-
-    Ok(units)
-}
-
-fn list_units_text_fallback() -> Result<Vec<SystemdUnit>, String> {
-    let output = Command::new("systemctl")
-        .args([
-            "list-units",
-            "--all",
-            "--type=service",
-            "--no-legend",
-            "--no-pager",
-        ])
-        .output()
-        .map_err(|e| format!("Failed to execute systemctl: {}", e))?;
-
-    let stdout = String::from_utf8_lossy(&output.stdout);
-    let mut units = Vec::new();
-
-    for line in stdout.lines() {
-        let parts: Vec<&str> = line.split_whitespace().collect();
-        if parts.len() >= 5 {
-            units.push(SystemdUnit {
-                unit: parts[0].to_string(),
-                load: parts[1].to_string(),
-                active: parts[2].to_string(),
-                sub: parts[3].to_string(),
-                description: parts[4..].join(" "),
-            });
-        }
-    }
-
-    Ok(units)
 }
